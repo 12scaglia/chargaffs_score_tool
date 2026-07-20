@@ -1,36 +1,36 @@
 # Chargaff's Score Tool
 
-Web app per l'analisi della Seconda Legge di Chargaff (PR2 — intra-strand parity) su sequenze FASTA: upload, windowing configurabile, calcolo del Chargaff Parity Score, annotazioni genomiche, heatmap/grafico/tabella interattivi.
+Web app for analyzing Chargaff's Second Parity Rule (PR2 — intra-strand parity) on FASTA sequences: upload, configurable windowing, Chargaff Parity Score calculation, genomic annotations, interactive heatmap/chart/table.
 
-Il repository contiene due versioni indipendenti, pensate per poter girare anche in parallelo sulla stessa macchina (porte diverse):
+The repository contains two independent versions, designed to also run in parallel on the same machine (different ports):
 
-- [`bio/`](./bio) — versione base
-- [`bio-advanced/`](./bio-advanced) — versione avanzata (skew, sliding window, multi-sequenza, confronto genomi)
+- [`bio/`](./bio) — base version
+- [`bio-advanced/`](./bio-advanced) — advanced version (skew, sliding window, multi-sequence, genome comparison)
 
-## Installazione
+## Installation
 
-### Prerequisiti
+### Prerequisites
 
-- **Python 3.12 o superiore** — `python3 --version` per controllare. Scaricabile da [python.org](https://www.python.org/downloads/).
-- **Node.js 18 o superiore** (con npm incluso) — `node --version` per controllare. Scaricabile da [nodejs.org](https://nodejs.org/).
-- **git** — `git --version` per controllare.
+- **Python 3.12 or higher** — run `python3 --version` to check. Download from [python.org](https://www.python.org/downloads/).
+- **Node.js 18 or higher** (npm included) — run `node --version` to check. Download from [nodejs.org](https://nodejs.org/).
+- **git** — run `git --version` to check.
 
-### 1. Scarica il progetto
+### 1. Get the project
 
 ```bash
 git clone https://github.com/12scaglia/chargaffs_score_tool
 cd chargaffs_score_tool
 ```
 
-Chi non usa git può anche scaricare lo ZIP da GitHub (bottone verde "Code" → "Download ZIP") ed estrarlo.
+If you don't use git, you can also download the ZIP from GitHub (green "Code" button → "Download ZIP") and extract it.
 
-### 2. Scegli quale versione avviare
+### 2. Choose which version to run
 
-Le due versioni sono indipendenti: bastano i passaggi della cartella che ti interessa. Ogni versione richiede **due processi separati** (backend e frontend), da lanciare in due terminali diversi.
+The two versions are independent: you only need the steps for the folder you're interested in. Each version requires **two separate processes** (backend and frontend), to be run in two different terminals.
 
-#### Versione base (`bio/`)
+#### Base version (`bio/`)
 
-Terminale 1 — backend:
+Terminal 1 — backend:
 
 ```bash
 cd bio/backend
@@ -39,7 +39,7 @@ python3 -m venv .venv
 .venv/bin/uvicorn app.main:app --reload --port 8000
 ```
 
-Terminale 2 — frontend:
+Terminal 2 — frontend:
 
 ```bash
 cd bio/frontend
@@ -47,11 +47,11 @@ npm install
 npm run dev
 ```
 
-Quando entrambi sono avviati, apri **http://127.0.0.1:5173** nel browser. L'API risponde su `http://127.0.0.1:8000` (verifica con `curl http://127.0.0.1:8000/health`, deve rispondere `{"status":"ok"}`).
+Once both are running, open **http://127.0.0.1:5173** in your browser. The API responds on `http://127.0.0.1:8000` (check with `curl http://127.0.0.1:8000/health`, it should return `{"status":"ok"}`).
 
-#### Versione avanzata (`bio-advanced/`)
+#### Advanced version (`bio-advanced/`)
 
-Terminale 1 — backend:
+Terminal 1 — backend:
 
 ```bash
 cd bio-advanced/backend
@@ -60,7 +60,7 @@ python3 -m venv .venv
 .venv/bin/uvicorn app.main:app --reload --port 8001
 ```
 
-Terminale 2 — frontend:
+Terminal 2 — frontend:
 
 ```bash
 cd bio-advanced/frontend
@@ -68,29 +68,29 @@ npm install
 npm run dev
 ```
 
-Apri **http://127.0.0.1:5174**. API su `http://127.0.0.1:8001`.
+Open **http://127.0.0.1:5174**. API on `http://127.0.0.1:8001`.
 
-### 3. Uso quotidiano
+### 3. Everyday use
 
-Una volta installate le dipendenze (`.venv` e `node_modules`), per i successivi avvii bastano gli ultimi comandi di ciascun terminale (`uvicorn ...` e `npm run dev`) — non serve ripetere `pip install`/`npm install` a meno che `requirements.txt` o `package.json` non cambino.
+Once the dependencies are installed (`.venv` and `node_modules`), subsequent runs only need the last command in each terminal (`uvicorn ...` and `npm run dev`) — no need to repeat `pip install`/`npm install` unless `requirements.txt` or `package.json` change.
 
-Per fermare i server: `Ctrl+C` in ciascun terminale.
+To stop the servers: `Ctrl+C` in each terminal.
 
-## Feature
+## Features
 
-### Versione base
+### Base version
 
-Upload FASTA, windowing configurabile, Chargaff Parity Score, heatmap/grafico/tabella, annotazioni genomiche (BED/GFF3/GTF/TXT, upload o manuali, modificabili e visualizzabili sul grafico), dark mode, italiano/inglese.
+FASTA upload, configurable windowing, Chargaff Parity Score, heatmap/chart/table, genomic annotations (BED/GFF3/GTF/TXT, upload or manual, editable and displayed on the chart), dark mode, Italian/English.
 
-### Versione avanzata
+### Advanced version
 
-Tutto quello della versione base, più: GC-skew/AT-skew per finestra, skew cumulativo (Z-curve), finestre sovrapposte (sliding window), predizione euristica di origine/terminazione di replicazione, supporto multi-sequenza (più cromosomi/contig in un solo FASTA), confronto diretto tra due genomi.
+Everything in the base version, plus: GC-skew/AT-skew per window, cumulative skew (Z-curve), overlapping windows (sliding window), heuristic prediction of replication origin/terminus, multi-sequence support (multiple chromosomes/contigs in a single FASTA), direct comparison between two genomes.
 
 ## Stack
 
 - **Backend:** Python 3.12+, FastAPI, Biopython, NumPy/Pandas, Uvicorn
 - **Frontend:** Vue 3 (`<script setup>`), Vite, Pinia, Vue Router, Axios, Apache ECharts, TailwindCSS, vue-i18n
 
-## Licenza
+## License
 
-MIT — vedi [LICENSE](./LICENSE).
+MIT — see [LICENSE](./LICENSE).
