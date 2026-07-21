@@ -8,6 +8,7 @@ import { useAnnotationOverlay } from '@/composables/useAnnotationOverlay'
 import { useNumberFormat } from '@/composables/useNumberFormat'
 import { useChartTheme } from '@/composables/useChartTheme'
 import { useAnalysisStore } from '@/stores/analysis'
+import { downloadDataUri } from '@/utils/download'
 
 const store = useAnalysisStore()
 const el = ref<HTMLDivElement | null>(null)
@@ -154,11 +155,25 @@ watch(() => store.selectedIndex, updateHighlight)
 watch(markAreaData, render)
 watch(locale, render)
 watch(isDark, render)
+
+function exportPng() {
+  const uri = chartState.chart?.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: isDark.value ? '#0f172a' : '#ffffff' })
+  if (uri) downloadDataUri(uri, 'chargaff_heatmap.png')
+}
 </script>
 
 <template>
   <div class="flex h-full flex-col">
-    <h3 class="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">{{ t('heatmap.title') }}</h3>
+    <div class="mb-2 flex items-center justify-between">
+      <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ t('heatmap.title') }}</h3>
+      <button
+        type="button"
+        class="rounded-md border border-slate-200 px-2 py-0.5 text-xs font-medium text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+        @click="exportPng"
+      >
+        {{ t('chart.exportPng') }}
+      </button>
+    </div>
     <div ref="el" class="min-h-[140px] flex-1" />
   </div>
 </template>

@@ -41,6 +41,35 @@ export interface AnalyzeResponse {
 
 export const WINDOW_SIZE_PRESETS = [50, 100, 200, 500, 1000, 5000, 10000, 25000] as const
 
+export type FetchSource = 'ncbi' | 'ensembl'
+
+export interface FetchRequest {
+  source: FetchSource
+  accession: string
+  species?: string
+  window_size: number
+  step_size?: number | null
+}
+
+export interface SignificanceRequest {
+  source: FetchSource
+  accession: string
+  species?: string
+  window_size: number
+  step_size?: number | null
+  n_permutations: number
+}
+
+export interface SignificanceResponse {
+  observed_mean_score: number
+  permuted_mean: number
+  permuted_std: number
+  z_score: number
+  p_value: number
+  n_permutations: number
+  is_significant: boolean
+}
+
 /** Region of biological interest (centromero, telomero, gene, ecc.) da sovrapporre ai grafici.
  * Non è un enum chiuso: i file GFF/GTF possono portare qualunque valore (tipo di
  * feature come "exon"/"CDS", oppure biotype come "lncRNA"/"protein_coding") e queste
@@ -102,6 +131,21 @@ export function formatCategoryLabel(category: AnnotationCategory): string {
 }
 
 export type TopSegmentsFilter = 'top10-best' | 'top10-worst' | 'top50-best' | 'top50-worst'
+
+/** Local session snapshot (export/import as a .json file, no server storage).
+ * Never embeds WindowData (large, regenerable) — "load" either re-fetches
+ * (accession-based sessions) or prompts the user to re-select the original
+ * file (upload-based sessions, since browsers can't restore a File handle
+ * from JSON for security reasons). */
+export interface SessionFile {
+  version: 1
+  savedAt: string
+  windowSize: number
+  stepSize: number | null
+  activeTopFilter: TopSegmentsFilter | null
+  annotations: Annotation[]
+  source: { kind: 'upload'; filename: string } | { kind: 'fetch'; source: FetchSource; accession: string; species?: string }
+}
 
 /** A single denormalized segment row, derived from WindowData for table/detail display. */
 export interface SegmentRow {

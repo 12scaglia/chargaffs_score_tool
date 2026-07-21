@@ -10,6 +10,8 @@ the response carries one `SequenceResult` per record under `records`.
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -54,3 +56,33 @@ class AnalyzeResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str = "ok"
+
+
+class FetchRequest(BaseModel):
+    source: Literal["ncbi", "ensembl"]
+    accession: str = Field(min_length=1, max_length=200)
+    species: str | None = None
+    window_size: int = Field(gt=0)
+    step_size: int | None = Field(default=None, gt=0)
+
+
+class SignificanceRequest(BaseModel):
+    """Fetch-by-accession variant of the significance test: re-fetches (nothing
+    is cached server-side) then runs the permutation test on the same source."""
+
+    source: Literal["ncbi", "ensembl"]
+    accession: str = Field(min_length=1, max_length=200)
+    species: str | None = None
+    window_size: int = Field(gt=0)
+    step_size: int | None = Field(default=None, gt=0)
+    n_permutations: int = Field(default=100, ge=10, le=500)
+
+
+class SignificanceResponse(BaseModel):
+    observed_mean_score: float
+    permuted_mean: float
+    permuted_std: float
+    z_score: float
+    p_value: float
+    n_permutations: int
+    is_significant: bool

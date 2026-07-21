@@ -6,6 +6,7 @@ import LeftSidebar from '@/components/layout/LeftSidebar.vue'
 import RightSidebar from '@/components/layout/RightSidebar.vue'
 import RecordSwitcher from '@/components/layout/RecordSwitcher.vue'
 import StatsCards from '@/components/dashboard/StatsCards.vue'
+import SignificancePanel from '@/components/dashboard/SignificancePanel.vue'
 import ScoreLineChart from '@/components/charts/ScoreLineChart.vue'
 import ScoreHeatmap from '@/components/charts/ScoreHeatmap.vue'
 import SkewChart from '@/components/charts/SkewChart.vue'
@@ -38,6 +39,8 @@ const { t } = useI18n()
           <RecordSwitcher />
 
           <StatsCards />
+
+          <SignificancePanel />
 
           <div class="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800" style="height: 320px">
             <ScoreLineChart />

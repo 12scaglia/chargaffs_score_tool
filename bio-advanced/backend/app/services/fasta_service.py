@@ -57,6 +57,27 @@ def _clean_to_uint8(raw_ascii: bytes, chunk_size: int) -> np.ndarray:
     return np.concatenate(chunks)
 
 
+def _build_parsed(records: list, filename: str) -> list[ParsedFasta]:
+    """Shared tail of both parsing entry points: id extraction + cleaning to
+    uint8. `records` are Biopython SeqRecord objects, already parsed from
+    either an uploaded file or fetched FASTA text."""
+    parsed: list[ParsedFasta] = []
+    for record in records:
+        sequence_id = record.id
+        raw_ascii = str(record.seq).upper().encode("ascii", errors="ignore")
+        cleaned_sequence = _clean_to_uint8(raw_ascii, settings.read_chunk_size_bytes)
+        del raw_ascii
+        parsed.append(
+            ParsedFasta(
+                sequence_id=sequence_id,
+                filename=filename,
+                total_length=int(cleaned_sequence.shape[0]),
+                cleaned_sequence=cleaned_sequence,
+            )
+        )
+    return parsed
+
+
 async def parse_fasta_records(file: UploadFile) -> list[ParsedFasta]:
     """Validate, parse (via Biopython SeqIO) and clean every record of an
     uploaded (possibly multi-FASTA) file — one chromosome/contig per record.
@@ -76,19 +97,18 @@ async def parse_fasta_records(file: UploadFile) -> list[ParsedFasta]:
     if not records:
         raise FastaValidationError("Nessuna sequenza FASTA valida trovata nel file.")
 
-    filename = file.filename or "unknown"
-    parsed: list[ParsedFasta] = []
-    for record in records:
-        sequence_id = record.id
-        raw_ascii = str(record.seq).upper().encode("ascii", errors="ignore")
-        cleaned_sequence = _clean_to_uint8(raw_ascii, settings.read_chunk_size_bytes)
-        del raw_ascii
-        parsed.append(
-            ParsedFasta(
-                sequence_id=sequence_id,
-                filename=filename,
-                total_length=int(cleaned_sequence.shape[0]),
-                cleaned_sequence=cleaned_sequence,
-            )
-        )
-    return parsed
+    return _build_parsed(records, file.filename or "unknown")
+
+
+def parse_fasta_text(text: str, filename: str) -> list[ParsedFasta]:
+    """Same cleaning/validation as parse_fasta_records, for FASTA text that
+    was fetched from an external source (NCBI/Ensembl) instead of uploaded —
+    keeps the fetch-by-accession path on the exact same pipeline as upload."""
+    if len(text.encode("utf-8")) > settings.max_upload_size_bytes:
+        raise FastaValidationError("Il testo scaricato supera la dimensione massima consentita.")
+
+    records = list(SeqIO.parse(io.StringIO(text), "fasta"))
+    if not records:
+        raise FastaValidationError("Nessuna sequenza FASTA valida trovata nella risposta del servizio esterno.")
+
+    return _build_parsed(records, filename)

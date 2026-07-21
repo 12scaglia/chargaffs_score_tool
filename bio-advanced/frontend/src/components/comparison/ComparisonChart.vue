@@ -7,6 +7,7 @@ import { useSyncedChart } from '@/composables/useSyncedChart'
 import { useNumberFormat } from '@/composables/useNumberFormat'
 import { useChartTheme } from '@/composables/useChartTheme'
 import type { AnalysisStore } from '@/stores/analysis'
+import { downloadDataUri } from '@/utils/download'
 
 const { primary, comparison } = defineProps<{ primary: AnalysisStore; comparison: AnalysisStore }>()
 
@@ -95,6 +96,11 @@ watch(() => comparison.data, render)
 watch(metric, render)
 watch(locale, render)
 watch(isDark, render)
+
+function exportPng() {
+  const uri = chartState.chart?.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: isDark.value ? '#0f172a' : '#ffffff' })
+  if (uri) downloadDataUri(uri, 'chargaff_comparison.png')
+}
 </script>
 
 <template>
@@ -125,6 +131,13 @@ watch(isDark, render)
           @click="metric = 'gcSkew'"
         >
           {{ t('skew.gcSkew') }}
+        </button>
+        <button
+          type="button"
+          class="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+          @click="exportPng"
+        >
+          {{ t('chart.exportPng') }}
         </button>
       </div>
     </div>

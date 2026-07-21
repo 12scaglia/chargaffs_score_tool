@@ -9,6 +9,7 @@ import { useNumberFormat } from '@/composables/useNumberFormat'
 import { useChartTheme } from '@/composables/useChartTheme'
 import { useSkewAnalysis, oriTerOverlayVisible } from '@/composables/useSkewAnalysis'
 import { useAnalysisStore } from '@/stores/analysis'
+import { downloadDataUri } from '@/utils/download'
 
 const store = useAnalysisStore()
 const el = ref<HTMLDivElement | null>(null)
@@ -151,6 +152,11 @@ watch(isDark, render)
 watch(mode, render)
 watch(oriTerOverlayVisible, render)
 watch(oriTerCandidates, render)
+
+function exportPng() {
+  const uri = chartState.chart?.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: isDark.value ? '#0f172a' : '#ffffff' })
+  if (uri) downloadDataUri(uri, 'chargaff_skew.png')
+}
 </script>
 
 <template>
@@ -181,6 +187,13 @@ watch(oriTerCandidates, render)
           @click="mode = 'cumulative'"
         >
           {{ t('skew.cumulative') }}
+        </button>
+        <button
+          type="button"
+          class="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+          @click="exportPng"
+        >
+          {{ t('chart.exportPng') }}
         </button>
       </div>
     </div>

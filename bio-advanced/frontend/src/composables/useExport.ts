@@ -1,19 +1,10 @@
+import { downloadBlob } from '@/utils/download'
 import type { WindowData } from '@/types/analysis'
 
 const CSV_HEADER = ['Rank', 'Start', 'End', 'A', 'T', 'G', 'C', 'GC%', 'Score']
 
 function gcPercent(g: number, c: number, n: number): number {
   return n > 0 ? ((g + c) / n) * 100 : 0
-}
-
-function downloadBlob(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  link.click()
-  URL.revokeObjectURL(url)
 }
 
 /** Export a window dataset as CSV/JSON. When `indices` is omitted, every

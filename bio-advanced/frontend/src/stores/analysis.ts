@@ -1,8 +1,17 @@
 import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
-import { analyzeFasta, extractApiErrorMessage } from '@/services/api'
+import { analyzeFasta, computeSignificance, computeSignificanceByAccession, extractApiErrorMessage, fetchByAccession } from '@/services/api'
 import i18n from '@/i18n'
-import type { AnalyzeResponse, SegmentRow, SequenceResult, Statistics, TopSegmentsFilter, WindowData } from '@/types/analysis'
+import type {
+  AnalyzeResponse,
+  FetchSource,
+  SegmentRow,
+  SequenceResult,
+  SignificanceResponse,
+  Statistics,
+  TopSegmentsFilter,
+  WindowData,
+} from '@/types/analysis'
 
 /** Factory so the same store shape can be instantiated twice: the primary
  * analysis slot and an independent comparison slot (see useComparisonStore),
@@ -27,6 +36,20 @@ function createAnalysisStore(id: string) {
 
     const selectedIndex = ref<number | null>(null)
     const activeTopFilter = ref<TopSegmentsFilter | null>(null)
+
+    /** How the current `records` were obtained — drives which endpoint
+     * runSignificance()/session save use, since nothing is cached
+     * server-side and a re-run needs to know whether to re-upload or
+     * re-fetch. */
+    const lastOrigin = ref<'upload' | 'fetch' | null>(null)
+    const lastFetchSource = ref<{ source: FetchSource; accession: string; species?: string } | null>(null)
+    /** Set by session load (upload-based sessions): the filename the user
+     * should re-select, since a browser can't restore a File handle from JSON. */
+    const pendingRestoreFilename = ref<string | null>(null)
+
+    const significance = ref<SignificanceResponse | null>(null)
+    const significanceLoading = ref(false)
+    const significanceError = ref<string | null>(null)
 
     // --- Getters -----------------------------------------------------------
     const activeRecord = computed<SequenceResult | null>(() => records.value[activeRecordIndex.value] ?? null)
@@ -88,6 +111,8 @@ function createAnalysisStore(id: string) {
     function setFile(file: File | null) {
       selectedFile.value = file
       error.value = null
+      lastOrigin.value = 'upload'
+      pendingRestoreFilename.value = null
     }
 
     function setWindowSize(size: number) {
@@ -111,6 +136,7 @@ function createAnalysisStore(id: string) {
       activeRecordIndex.value = index
       selectedIndex.value = null
       activeTopFilter.value = null
+      significance.value = null
     }
 
     function applyResponse(response: AnalyzeResponse) {
@@ -119,6 +145,8 @@ function createAnalysisStore(id: string) {
       activeRecordIndex.value = 0
       selectedIndex.value = null
       activeTopFilter.value = null
+      significance.value = null
+      significanceError.value = null
     }
 
     async function runAnalysis() {
@@ -134,11 +162,65 @@ function createAnalysisStore(id: string) {
         const response = await analyzeFasta(selectedFile.value, windowSize.value, effectiveStep, (percent) => {
           uploadProgress.value = percent
         })
+        lastOrigin.value = 'upload'
         applyResponse(response)
       } catch (err) {
         error.value = extractApiErrorMessage(err)
       } finally {
         isLoading.value = false
+      }
+    }
+
+    async function runFetch(source: FetchSource, accession: string, species?: string) {
+      isLoading.value = true
+      error.value = null
+      try {
+        const effectiveStep = stepSize.value ?? windowSize.value
+        const response = await fetchByAccession({
+          source,
+          accession,
+          species: species || undefined,
+          window_size: windowSize.value,
+          step_size: effectiveStep,
+        })
+        selectedFile.value = null
+        lastOrigin.value = 'fetch'
+        lastFetchSource.value = { source, accession, species: species || undefined }
+        applyResponse(response)
+      } catch (err) {
+        error.value = extractApiErrorMessage(err)
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    async function runSignificance(nPermutations = 100) {
+      significanceLoading.value = true
+      significanceError.value = null
+      try {
+        const effectiveStep = stepSize.value ?? windowSize.value
+        if (lastOrigin.value === 'fetch' && lastFetchSource.value) {
+          significance.value = await computeSignificanceByAccession({
+            ...lastFetchSource.value,
+            window_size: windowSize.value,
+            step_size: effectiveStep,
+            n_permutations: nPermutations,
+          })
+        } else if (lastOrigin.value === 'upload' && selectedFile.value) {
+          significance.value = await computeSignificance(
+            selectedFile.value,
+            windowSize.value,
+            effectiveStep,
+            nPermutations,
+            activeRecordIndex.value,
+          )
+        } else {
+          significanceError.value = i18n.global.t('significance.error')
+        }
+      } catch (err) {
+        significanceError.value = extractApiErrorMessage(err)
+      } finally {
+        significanceLoading.value = false
       }
     }
 
@@ -151,6 +233,11 @@ function createAnalysisStore(id: string) {
       activeTopFilter.value = null
       error.value = null
       uploadProgress.value = 0
+      lastOrigin.value = null
+      lastFetchSource.value = null
+      pendingRestoreFilename.value = null
+      significance.value = null
+      significanceError.value = null
     }
 
     return {
@@ -168,6 +255,12 @@ function createAnalysisStore(id: string) {
       error,
       selectedIndex,
       activeTopFilter,
+      lastOrigin,
+      lastFetchSource,
+      pendingRestoreFilename,
+      significance,
+      significanceLoading,
+      significanceError,
       hasResults,
       totalWindows,
       selectedSegment,
@@ -180,6 +273,8 @@ function createAnalysisStore(id: string) {
       setTopFilter,
       setActiveRecord,
       runAnalysis,
+      runFetch,
+      runSignificance,
       reset,
     }
   })

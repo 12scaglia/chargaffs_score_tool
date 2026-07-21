@@ -57,5 +57,11 @@ export const useAnnotationsStore = defineStore('annotations', () => {
     error.value = null
   }
 
-  return { regions, error, loadFromFile, addManual, update, remove, clear }
+  /** Re-adds an annotation preserving its original id/source (unlike
+   * addManual, which always mints a fresh id) — used by session restore. */
+  function restore(annotation: Annotation) {
+    regions.value = [...regions.value, annotation]
+  }
+
+  return { regions, error, loadFromFile, addManual, update, remove, clear, restore }
 })

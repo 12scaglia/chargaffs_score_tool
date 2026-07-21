@@ -1,6 +1,6 @@
 import axios from 'axios'
 import i18n from '@/i18n'
-import type { AnalyzeResponse } from '@/types/analysis'
+import type { AnalyzeResponse, FetchRequest, SignificanceRequest, SignificanceResponse } from '@/types/analysis'
 
 const apiClient = axios.create({
   baseURL: '/api',
@@ -22,6 +22,31 @@ export async function analyzeFasta(
       onUploadProgress(Math.round((event.loaded / event.total) * 100))
     },
   })
+  return response.data
+}
+
+export async function fetchByAccession(payload: FetchRequest): Promise<AnalyzeResponse> {
+  const response = await apiClient.post<AnalyzeResponse>('/fetch', payload)
+  return response.data
+}
+
+export async function computeSignificance(
+  file: File,
+  windowSize: number,
+  stepSize: number,
+  nPermutations: number,
+  recordIndex: number,
+): Promise<SignificanceResponse> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await apiClient.post<SignificanceResponse>('/significance', formData, {
+    params: { window_size: windowSize, step_size: stepSize, n_permutations: nPermutations, record_index: recordIndex },
+  })
+  return response.data
+}
+
+export async function computeSignificanceByAccession(payload: SignificanceRequest): Promise<SignificanceResponse> {
+  const response = await apiClient.post<SignificanceResponse>('/fetch/significance', payload)
   return response.data
 }
 

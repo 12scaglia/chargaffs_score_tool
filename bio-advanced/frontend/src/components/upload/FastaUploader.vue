@@ -64,6 +64,14 @@ function clearFile() {
     <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">{{ t('upload.label') }}</label>
 
     <div
+      v-if="store.pendingRestoreFilename"
+      class="mb-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:ring-amber-900/50"
+    >
+      <p class="font-semibold">{{ t('session.restoreFilePrompt') }}</p>
+      <p class="mt-0.5">{{ t('session.restoreFilePromptDetail', { filename: store.pendingRestoreFilename }) }}</p>
+    </div>
+
+    <div
       class="cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors"
       :class="
         isDragging

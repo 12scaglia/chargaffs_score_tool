@@ -1,5 +1,6 @@
 fastapi==0.116.1
 uvicorn[standard]==0.35.0
+httpx==0.28.1
 biopython==1.85
 numpy==2.2.6
 pandas==2.2.3

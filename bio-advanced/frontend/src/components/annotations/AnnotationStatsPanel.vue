@@ -7,6 +7,7 @@ import { useNumberFormat } from '@/composables/useNumberFormat'
 import { requestRegionFocus } from '@/composables/useRegionFocus'
 import { formatCategoryLabel, getCategoryColor, isBaseCategory } from '@/types/analysis'
 import type { AnnotationCategory } from '@/types/analysis'
+import { downloadBlob } from '@/utils/download'
 
 const store = useAnalysisStore()
 const { overlayRegions } = useAnnotationOverlay()
@@ -66,19 +67,54 @@ function focusRegion(startIndex: number, endIndex: number) {
   store.selectSegment(startIndex)
   requestRegionFocus(startIndex, endIndex)
 }
+
+/** Exports exactly what's on screen: current category filter + sort order. */
+function exportCsv() {
+  const header = [
+    t('annotationStats.region'),
+    t('annotationStats.category'),
+    'Start',
+    'End',
+    t('annotationStats.regionScore'),
+    t('annotationStats.globalScore'),
+    t('annotationStats.delta'),
+  ]
+  const csvField = (value: string) => (/[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value)
+  const lines = rows.value.map((row) =>
+    [
+      csvField(row.annotation.name),
+      csvField(categoryLabel(row.annotation.category)),
+      String(row.annotation.start),
+      String(row.annotation.end),
+      row.regionMeanScore?.toFixed(6) ?? '',
+      row.globalMean?.toFixed(6) ?? '',
+      row.delta?.toFixed(6) ?? '',
+    ].join(','),
+  )
+  downloadBlob([header.join(','), ...lines].join('\n'), 'chargaff_annotation_scores.csv', 'text/csv;charset=utf-8')
+}
 </script>
 
 <template>
   <div v-if="overlayRegions.length > 0" class="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
     <div class="mb-3 flex items-center justify-between gap-3">
       <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ t('annotationStats.title') }}</h3>
-      <select
-        v-model="categoryFilter"
-        class="rounded-md border-0 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700"
-      >
-        <option value="all">{{ t('annotationStats.allCategories') }}</option>
-        <option v-for="cat in availableCategories" :key="cat" :value="cat">{{ categoryLabel(cat) }}</option>
-      </select>
+      <div class="flex items-center gap-2">
+        <select
+          v-model="categoryFilter"
+          class="rounded-md border-0 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700"
+        >
+          <option value="all">{{ t('annotationStats.allCategories') }}</option>
+          <option v-for="cat in availableCategories" :key="cat" :value="cat">{{ categoryLabel(cat) }}</option>
+        </select>
+        <button
+          type="button"
+          class="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+          @click="exportCsv"
+        >
+          {{ t('annotationStats.exportCsv') }}
+        </button>
+      </div>
     </div>
 
     <p v-if="rows.length === 0" class="py-4 text-center text-xs text-slate-400 dark:text-slate-500">
