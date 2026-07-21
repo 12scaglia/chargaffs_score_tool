@@ -26,7 +26,31 @@ If you don't use git, you can also download the ZIP from GitHub (green "Code" bu
 
 ### 2. Choose which version to run
 
-The two versions are independent: you only need the steps for the folder you're interested in. Each version requires **two separate processes** (backend and frontend), to be run in two different terminals.
+The two versions are independent: you only need the steps for the folder you're interested in. Each version requires **two separate processes** (backend and frontend).
+
+#### Quick start (launcher script)
+
+A launcher script is included at the repo root that lets you pick a version interactively, installs dependencies on first run, and starts both processes for you:
+
+- **Linux/macOS:**
+
+  ```bash
+  ./run.sh
+  ```
+
+  Runs backend and frontend in the same terminal; `Ctrl+C` stops both.
+
+- **Windows:**
+
+  ```bat
+  run.bat
+  ```
+
+  Opens backend and frontend each in their own window; close those windows (or `Ctrl+C` in each) to stop the servers.
+
+#### Manual start
+
+If you prefer to run each process yourself (or need more control), use the commands below in two different terminals.
 
 #### Base version (`bio/`)
 
