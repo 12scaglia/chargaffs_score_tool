@@ -1,36 +1,14 @@
 #!/usr/bin/env bash
-# Launches either the base or advanced version of the Chargaff Score Tool
-# (backend + frontend), setting up dependencies on first run if needed.
+# Launches the Chargaff Score Tool (backend + frontend), setting up
+# dependencies on first run if needed.
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKEND_DIR="$REPO_DIR/backend"
+FRONTEND_DIR="$REPO_DIR/frontend"
+BACKEND_PORT=8000
 
-echo "Which version do you want to start?"
-echo "  1) Base       (bio/)          - backend:8000  frontend:5173"
-echo "  2) Advanced   (bio-advanced/) - backend:8001  frontend:5174"
-read -rp "Choice [1/2]: " choice
-
-case "$choice" in
-  1)
-    NAME="base"
-    DIR="$REPO_DIR/bio"
-    BACKEND_PORT=8000
-    ;;
-  2)
-    NAME="advanced"
-    DIR="$REPO_DIR/bio-advanced"
-    BACKEND_PORT=8001
-    ;;
-  *)
-    echo "Invalid choice: $choice" >&2
-    exit 1
-    ;;
-esac
-
-BACKEND_DIR="$DIR/backend"
-FRONTEND_DIR="$DIR/frontend"
-
-echo "Starting $NAME version..."
+echo "Starting Chargaff Score Tool..."
 
 # --- Backend setup ---
 if [ ! -d "$BACKEND_DIR/.venv" ]; then

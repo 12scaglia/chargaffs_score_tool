@@ -1,11 +1,6 @@
 # Chargaff's Score Tool
 
-Web app for analyzing Chargaff's Second Parity Rule (PR2 — intra-strand parity) on FASTA sequences: upload, configurable windowing, Chargaff Parity Score calculation, genomic annotations, interactive heatmap/chart/table.
-
-The repository contains two independent versions, designed to also run in parallel on the same machine (different ports):
-
-- [`bio/`](./bio) — base version
-- [`bio-advanced/`](./bio-advanced) — advanced version (skew, sliding window, multi-sequence, genome comparison)
+Web app for analyzing Chargaff's Second Parity Rule (PR2 — intra-strand parity) on FASTA sequences: upload or fetch-by-accession (NCBI/Ensembl), configurable windowing, Chargaff Parity Score, GC/AT-skew, statistical significance testing, genomic annotations, and CSV/PNG/Markdown export.
 
 ## Installation
 
@@ -24,13 +19,13 @@ cd chargaffs_score_tool
 
 If you don't use git, you can also download the ZIP from GitHub (green "Code" button → "Download ZIP") and extract it.
 
-### 2. Choose which version to run
+### 2. Run it
 
-The two versions are independent: you only need the steps for the folder you're interested in. Each version requires **two separate processes** (backend and frontend).
+The app requires **two separate processes** (backend and frontend).
 
 #### Quick start (launcher script)
 
-A launcher script is included at the repo root that lets you pick a version interactively, installs dependencies on first run, and starts both processes for you:
+A launcher script is included at the repo root that installs dependencies on first run and starts both processes for you:
 
 - **Linux/macOS:**
 
@@ -50,14 +45,12 @@ A launcher script is included at the repo root that lets you pick a version inte
 
 #### Manual start
 
-If you prefer to run each process yourself (or need more control), use the commands below in two different terminals.
-
-#### Base version (`bio/`)
+If you prefer to run each process yourself (or need more control), use two terminals:
 
 Terminal 1 — backend:
 
 ```bash
-cd bio/backend
+cd backend
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/uvicorn app.main:app --reload --port 8000
@@ -66,33 +59,20 @@ python3 -m venv .venv
 Terminal 2 — frontend:
 
 ```bash
-cd bio/frontend
+cd frontend
 npm install
 npm run dev
 ```
 
 Once both are running, open **http://127.0.0.1:5173** in your browser. The API responds on `http://127.0.0.1:8000` (check with `curl http://127.0.0.1:8000/health`, it should return `{"status":"ok"}`).
 
-#### Advanced version (`bio-advanced/`)
-
-Terminal 1 — backend:
+#### Docker (no local Python/Node needed)
 
 ```bash
-cd bio-advanced/backend
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/uvicorn app.main:app --reload --port 8001
+docker compose up --build
 ```
 
-Terminal 2 — frontend:
-
-```bash
-cd bio-advanced/frontend
-npm install
-npm run dev
-```
-
-Open **http://127.0.0.1:5174**. API on `http://127.0.0.1:8001`.
+Open **http://localhost:8080**. The frontend container serves the built app and reverse-proxies `/api/*` to the backend container — no ports/CORS to configure. This is a "just run it" path (no hot reload); for day-to-day development use the launcher script or manual start above.
 
 ### 3. Everyday use
 
@@ -100,20 +80,35 @@ Once the dependencies are installed (`.venv` and `node_modules`), subsequent run
 
 To stop the servers: `Ctrl+C` in each terminal.
 
+## Testing
+
+```bash
+# Backend (from backend/, with the venv set up as above)
+.venv/bin/pytest -q
+
+# Frontend (from frontend/, with dependencies installed as above)
+npm run test
+```
+
+Both suites also run automatically in CI on every push/PR (see `.github/workflows/ci.yml`), along with a `docker compose build` check.
+
 ## Features
 
-### Base version
-
-FASTA upload, configurable windowing, Chargaff Parity Score, heatmap/chart/table, genomic annotations (BED/GFF3/GTF/TXT, upload or manual, editable and displayed on the chart), dark mode, Italian/English.
-
-### Advanced version
-
-Everything in the base version, plus: GC-skew/AT-skew per window, cumulative skew (Z-curve), overlapping windows (sliding window), heuristic prediction of replication origin/terminus, multi-sequence support (multiple chromosomes/contigs in a single FASTA), direct comparison between two genomes.
+- **FASTA upload** or **fetch by accession** directly from NCBI E-utilities or Ensembl REST (with an option to score the entire fetched sequence as a single window, useful for whole-gene comparisons)
+- Configurable windowing, including overlapping/sliding windows
+- Chargaff Parity Score, GC-skew/AT-skew per window, cumulative skew (Z-curve)
+- Heuristic prediction of replication origin/terminus
+- Multi-sequence support (multiple chromosomes/contigs in a single FASTA) and direct comparison between two genomes
+- Statistical significance testing: a permutation test compares the observed score against a shuffled-sequence baseline (z-score/p-value)
+- Genomic annotations (BED/GFF3/GTF/TXT, upload or manual): categories are discovered dynamically from the file content (gene biotype, feature type, etc.), with a sortable/filterable score table
+- Export: CSV (annotation/region table), PNG (charts), Markdown report
+- Save/load a full session (window size, annotations, filters, source) as a local JSON file
+- Dark mode, Italian/English
 
 ## Stack
 
-- **Backend:** Python 3.12+, FastAPI, Biopython, NumPy/Pandas, Uvicorn
-- **Frontend:** Vue 3 (`<script setup>`), Vite, Pinia, Vue Router, Axios, Apache ECharts, TailwindCSS, vue-i18n
+- **Backend:** Python 3.12+, FastAPI, Biopython, NumPy/Pandas, httpx, Uvicorn
+- **Frontend:** Vue 3 (`<script setup>`), Vite, Pinia, Axios, Apache ECharts, TailwindCSS, vue-i18n
 
 ## License
 
