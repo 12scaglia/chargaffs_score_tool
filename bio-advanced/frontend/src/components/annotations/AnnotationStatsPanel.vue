@@ -5,13 +5,24 @@ import { useAnalysisStore } from '@/stores/analysis'
 import { useAnnotationOverlay } from '@/composables/useAnnotationOverlay'
 import { useNumberFormat } from '@/composables/useNumberFormat'
 import { requestRegionFocus } from '@/composables/useRegionFocus'
-import { ANNOTATION_CATEGORIES, ANNOTATION_COLORS } from '@/types/analysis'
+import { formatCategoryLabel, getCategoryColor, isBaseCategory } from '@/types/analysis'
 import type { AnnotationCategory } from '@/types/analysis'
 
 const store = useAnalysisStore()
 const { overlayRegions } = useAnnotationOverlay()
 const { t } = useI18n()
 const { formatNumber } = useNumberFormat()
+
+function categoryLabel(category: AnnotationCategory): string {
+  return isBaseCategory(category) ? t(`annotations.categories.${category}`) : formatCategoryLabel(category)
+}
+
+/** Categorie disponibili nel filtro: solo quelle effettivamente presenti nelle
+ * annotazioni caricate (non un elenco fisso), ordinate per etichetta. */
+const availableCategories = computed(() => {
+  const found = new Set(overlayRegions.value.map((r) => r.annotation.category))
+  return [...found].sort((a, b) => categoryLabel(a).localeCompare(categoryLabel(b)))
+})
 
 const categoryFilter = ref<AnnotationCategory | 'all'>('all')
 
@@ -40,7 +51,7 @@ const rows = computed(() => {
   const dir = sortDir.value === 'asc' ? 1 : -1
 
   if (sortKey.value === 'category') {
-    return mapped.sort((a, b) => dir * t(`annotations.categories.${a.annotation.category}`).localeCompare(t(`annotations.categories.${b.annotation.category}`)))
+    return mapped.sort((a, b) => dir * categoryLabel(a.annotation.category).localeCompare(categoryLabel(b.annotation.category)))
   }
   if (sortKey.value === 'regionScore') {
     return mapped.sort((a, b) => dir * ((a.regionMeanScore ?? -Infinity) - (b.regionMeanScore ?? -Infinity)))
@@ -66,7 +77,7 @@ function focusRegion(startIndex: number, endIndex: number) {
         class="rounded-md border-0 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700"
       >
         <option value="all">{{ t('annotationStats.allCategories') }}</option>
-        <option v-for="cat in ANNOTATION_CATEGORIES" :key="cat" :value="cat">{{ t(`annotations.categories.${cat}`) }}</option>
+        <option v-for="cat in availableCategories" :key="cat" :value="cat">{{ categoryLabel(cat) }}</option>
       </select>
     </div>
 
@@ -118,10 +129,10 @@ function focusRegion(startIndex: number, endIndex: number) {
             @click="focusRegion(row.startIndex, row.endIndex)"
           >
             <td class="py-1.5 pr-3">
-              <span class="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" :style="{ backgroundColor: ANNOTATION_COLORS[row.annotation.category] }" />
+              <span class="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" :style="{ backgroundColor: getCategoryColor(row.annotation.category) }" />
               {{ row.annotation.name }}
             </td>
-            <td class="py-1.5 pr-3 text-slate-500 dark:text-slate-400">{{ t(`annotations.categories.${row.annotation.category}`) }}</td>
+            <td class="py-1.5 pr-3 text-slate-500 dark:text-slate-400">{{ categoryLabel(row.annotation.category) }}</td>
             <td class="py-1.5 pr-3 text-slate-500 dark:text-slate-400">{{ formatNumber(row.annotation.start) }}–{{ formatNumber(row.annotation.end) }}</td>
             <td class="py-1.5 pr-3 font-medium text-slate-800 dark:text-slate-100">{{ row.regionMeanScore?.toFixed(4) ?? '—' }}</td>
             <td class="py-1.5 pr-3 text-slate-500 dark:text-slate-400">{{ row.globalMean?.toFixed(4) ?? '—' }}</td>

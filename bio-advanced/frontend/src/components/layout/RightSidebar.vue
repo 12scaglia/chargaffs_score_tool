@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useAnalysisStore } from '@/stores/analysis'
 import { useNumberFormat } from '@/composables/useNumberFormat'
 import { useAnnotationOverlay } from '@/composables/useAnnotationOverlay'
-import { ANNOTATION_COLORS } from '@/types/analysis'
+import { getCategoryColor } from '@/types/analysis'
 
 const store = useAnalysisStore()
 const { t } = useI18n()
@@ -56,7 +56,7 @@ function scoreColorClass(score: number): string {
             v-for="entry in segmentAnnotations"
             :key="entry.annotation.id"
             class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
-            :style="{ color: ANNOTATION_COLORS[entry.annotation.category], backgroundColor: `${ANNOTATION_COLORS[entry.annotation.category]}1f` }"
+            :style="{ color: getCategoryColor(entry.annotation.category), backgroundColor: `${getCategoryColor(entry.annotation.category)}1f` }"
           >
             {{ entry.annotation.name }}
           </span>

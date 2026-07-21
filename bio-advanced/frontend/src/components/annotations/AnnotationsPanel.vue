@@ -5,7 +5,7 @@ import { useAnnotationsStore } from '@/stores/annotations'
 import { useAnnotationOverlay } from '@/composables/useAnnotationOverlay'
 import { useAnalysisStore } from '@/stores/analysis'
 import { requestRegionFocus } from '@/composables/useRegionFocus'
-import { ANNOTATION_CATEGORIES, ANNOTATION_COLORS } from '@/types/analysis'
+import { ANNOTATION_CATEGORIES, getCategoryColor } from '@/types/analysis'
 import type { Annotation, AnnotationCategory } from '@/types/analysis'
 
 const ALLOWED_EXTENSIONS = ['.bed', '.gff', '.gff3', '.gtf', '.txt']
@@ -151,7 +151,7 @@ function submitManual() {
         class="flex items-center justify-between gap-2 rounded-md bg-white px-2 py-1.5 text-xs ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700"
       >
         <div class="flex min-w-0 items-center gap-1.5">
-          <span class="h-2.5 w-2.5 shrink-0 rounded-full" :style="{ backgroundColor: ANNOTATION_COLORS[region.category] }" />
+          <span class="h-2.5 w-2.5 shrink-0 rounded-full" :style="{ backgroundColor: getCategoryColor(region.category) }" />
           <span class="truncate font-medium text-slate-700 dark:text-slate-200" :title="region.name">{{ region.name }}</span>
         </div>
         <div class="flex shrink-0 items-center gap-2">

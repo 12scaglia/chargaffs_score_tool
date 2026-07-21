@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import { useAnalysisStore } from '@/stores/analysis'
 import { useAnnotationsStore } from '@/stores/annotations'
-import { ANNOTATION_COLORS } from '@/types/analysis'
+import { getCategoryColor } from '@/types/analysis'
 import type { Annotation } from '@/types/analysis'
 
 /** Binary search: indice della finestra il cui [start,end] contiene bp,
@@ -55,7 +55,7 @@ export function useAnnotationOverlay() {
 
   const markAreaData = computed(() =>
     overlayRegions.value.slice(0, MAX_CHART_MARK_AREAS).map((r) => {
-      const color = ANNOTATION_COLORS[r.annotation.category]
+      const color = getCategoryColor(r.annotation.category)
       return [
         {
           xAxis: r.startIndex,
