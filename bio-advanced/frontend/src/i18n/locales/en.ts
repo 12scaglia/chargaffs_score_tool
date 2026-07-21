@@ -54,6 +54,8 @@ export default {
     speciesLabel: 'Species',
     speciesPlaceholder: 'e.g. homo_sapiens',
     speciesHelp: 'Required for a region (chr:start-end); not needed for a stable ID (ENS...).',
+    wholeSequence: 'Calculate score over the whole sequence length',
+    wholeSequenceHint: 'Ignores the window size below and computes a single score for the entire gene/record.',
     fetchButton: 'Fetch & Analyze',
     fetching: 'Fetching…',
     errorMissingAccession: 'Enter an accession before fetching.',

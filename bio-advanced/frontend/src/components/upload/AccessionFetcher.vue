@@ -10,6 +10,7 @@ const { t } = useI18n()
 const source = ref<FetchSource>('ncbi')
 const accession = ref('')
 const species = ref('')
+const wholeSequence = ref(false)
 const localError = ref<string | null>(null)
 
 const looksLikeStableId = computed(() => /^ENS/i.test(accession.value.trim()))
@@ -26,7 +27,7 @@ function submit() {
     localError.value = t('fetch.errorMissingSpecies')
     return
   }
-  store.runFetch(source.value, trimmedAccession, species.value.trim() || undefined)
+  store.runFetch(source.value, trimmedAccession, species.value.trim() || undefined, wholeSequence.value)
 }
 </script>
 
@@ -60,6 +61,14 @@ function submit() {
       />
       <p class="mb-3 text-[11px] text-slate-400 dark:text-slate-500">{{ t('fetch.speciesHelp') }}</p>
     </template>
+
+    <label class="mb-3 flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
+      <input v-model="wholeSequence" type="checkbox" class="mt-0.5 h-3.5 w-3.5 rounded" />
+      <span>
+        {{ t('fetch.wholeSequence') }}
+        <span class="block text-[11px] text-slate-400 dark:text-slate-500">{{ t('fetch.wholeSequenceHint') }}</span>
+      </span>
+    </label>
 
     <button
       type="button"

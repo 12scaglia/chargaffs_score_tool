@@ -50,6 +50,7 @@ export interface FetchRequest {
   species?: string
   window_size: number
   step_size?: number | null
+  whole_sequence?: boolean
 }
 
 export interface SignificanceRequest {
@@ -145,7 +146,9 @@ export interface SessionFile {
   stepSize: number | null
   activeTopFilter: TopSegmentsFilter | null
   annotations: Annotation[]
-  source: { kind: 'upload'; filename: string } | { kind: 'fetch'; source: FetchSource; accession: string; species?: string }
+  source:
+    | { kind: 'upload'; filename: string }
+    | { kind: 'fetch'; source: FetchSource; accession: string; species?: string; wholeSequence?: boolean }
 }
 
 /** A single denormalized segment row, derived from WindowData for table/detail display. */

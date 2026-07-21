@@ -42,7 +42,7 @@ function createAnalysisStore(id: string) {
      * server-side and a re-run needs to know whether to re-upload or
      * re-fetch. */
     const lastOrigin = ref<'upload' | 'fetch' | null>(null)
-    const lastFetchSource = ref<{ source: FetchSource; accession: string; species?: string } | null>(null)
+    const lastFetchSource = ref<{ source: FetchSource; accession: string; species?: string; wholeSequence?: boolean } | null>(null)
     /** Set by session load (upload-based sessions): the filename the user
      * should re-select, since a browser can't restore a File handle from JSON. */
     const pendingRestoreFilename = ref<string | null>(null)
@@ -172,7 +172,7 @@ function createAnalysisStore(id: string) {
       }
     }
 
-    async function runFetch(source: FetchSource, accession: string, species?: string) {
+    async function runFetch(source: FetchSource, accession: string, species?: string, wholeSequence = false) {
       isLoading.value = true
       error.value = null
       try {
@@ -183,10 +183,11 @@ function createAnalysisStore(id: string) {
           species: species || undefined,
           window_size: windowSize.value,
           step_size: effectiveStep,
+          whole_sequence: wholeSequence,
         })
         selectedFile.value = null
         lastOrigin.value = 'fetch'
-        lastFetchSource.value = { source, accession, species: species || undefined }
+        lastFetchSource.value = { source, accession, species: species || undefined, wholeSequence }
         applyResponse(response)
       } catch (err) {
         error.value = extractApiErrorMessage(err)
@@ -201,8 +202,11 @@ function createAnalysisStore(id: string) {
       try {
         const effectiveStep = stepSize.value ?? windowSize.value
         if (lastOrigin.value === 'fetch' && lastFetchSource.value) {
+          const { source, accession, species } = lastFetchSource.value
           significance.value = await computeSignificanceByAccession({
-            ...lastFetchSource.value,
+            source,
+            accession,
+            species,
             window_size: windowSize.value,
             step_size: effectiveStep,
             n_permutations: nPermutations,

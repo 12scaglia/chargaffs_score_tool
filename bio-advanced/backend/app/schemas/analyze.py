@@ -65,6 +65,10 @@ class FetchRequest(BaseModel):
     species: str | None = None
     window_size: int = Field(gt=0)
     step_size: int | None = Field(default=None, gt=0)
+    # When true, window_size/step_size above are ignored and a single window
+    # spanning the whole fetched sequence is used instead — one PR2 score for
+    # the entire gene/record, rather than per-window scores across it.
+    whole_sequence: bool = False
 
 
 class SignificanceRequest(BaseModel):

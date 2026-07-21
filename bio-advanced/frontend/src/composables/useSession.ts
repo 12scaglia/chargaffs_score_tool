@@ -61,7 +61,7 @@ export function useSession() {
     for (const annotation of session.annotations) annotationsStore.restore(annotation)
 
     if (session.source.kind === 'fetch') {
-      await store.runFetch(session.source.source, session.source.accession, session.source.species)
+      await store.runFetch(session.source.source, session.source.accession, session.source.species, session.source.wholeSequence)
     } else {
       store.pendingRestoreFilename = session.source.filename
     }

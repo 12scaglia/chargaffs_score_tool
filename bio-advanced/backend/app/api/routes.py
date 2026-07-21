@@ -115,6 +115,11 @@ async def fetch_and_analyze(payload: FetchRequest) -> AnalyzeResponse:
     except FastaValidationError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
+    if payload.whole_sequence:
+        lengths = [record.total_length for record in parsed_records if record.total_length > 0]
+        whole_window_size = max(lengths) if lengths else payload.window_size
+        return _build_analyze_response(parsed_records, whole_window_size, None)
+
     return _build_analyze_response(parsed_records, payload.window_size, payload.step_size)
 
 

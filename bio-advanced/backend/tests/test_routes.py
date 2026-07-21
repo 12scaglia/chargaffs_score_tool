@@ -48,6 +48,26 @@ def test_fetch_endpoint_success(monkeypatch):
     assert body["records"][0]["sequence_info"]["sequence_id"] == "seq1"
 
 
+def test_fetch_endpoint_whole_sequence_returns_single_window(monkeypatch):
+    async def fake_fetch_sequence(source, accession, species=None):
+        return SAMPLE_FASTA.decode("ascii"), f"{accession}.fasta"
+
+    monkeypatch.setattr(fetch_service, "fetch_sequence", fake_fetch_sequence)
+
+    response = client.post(
+        "/fetch",
+        json={"source": "ncbi", "accession": "NC_TEST", "window_size": 100, "whole_sequence": True},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    record = body["records"][0]
+    total_length = record["sequence_info"]["total_length"]
+    assert body["window_size"] == total_length
+    assert len(record["data"]["score"]) == 1
+    assert record["data"]["start"] == [1]
+    assert record["data"]["end"] == [total_length]
+
+
 def test_fetch_endpoint_propagates_fetch_service_error_as_400(monkeypatch):
     async def fake_fetch_sequence(source, accession, species=None):
         raise fetch_service.FetchServiceError("accession non trovata")
