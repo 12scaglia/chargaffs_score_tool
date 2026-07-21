@@ -27,6 +27,7 @@ export function useMarkdownReport() {
     if (info) {
       lines.push(
         `- **${t('upload.sequenceId')}:** ${info.sequence_id}`,
+        ...(info.description ? [`- **Description:** ${info.description}`] : []),
         `- **File:** ${info.filename}`,
         `- **${t('upload.length')}:** ${info.total_length.toLocaleString()} bp`,
         `- **${t('app.windowLabel')}:** ${store.windowSize.toLocaleString()} bp`,

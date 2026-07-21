@@ -61,6 +61,7 @@ function createAnalysisStore(id: string) {
       return {
         filename: filename.value,
         sequence_id: rec.sequence_info.sequence_id,
+        description: rec.sequence_info.description,
         total_length: rec.sequence_info.total_length,
       }
     })

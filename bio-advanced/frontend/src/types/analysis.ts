@@ -1,5 +1,6 @@
 export interface SequenceInfo {
   sequence_id: string
+  description: string
   total_length: number
 }
 

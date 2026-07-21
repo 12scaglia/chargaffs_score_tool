@@ -34,6 +34,9 @@ export default {
   records: {
     label: 'Sequences in file',
   },
+  sequenceInfo: {
+    viewSource: 'View source',
+  },
   sidebar: {
     analyzing: 'Analyzing…',
     analyze: 'Analyze',

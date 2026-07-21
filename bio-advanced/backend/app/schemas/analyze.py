@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field
 
 class SequenceInfo(BaseModel):
     sequence_id: str
+    description: str = ""
     total_length: int
 
 

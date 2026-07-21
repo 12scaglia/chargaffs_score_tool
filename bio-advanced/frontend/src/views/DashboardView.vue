@@ -5,6 +5,7 @@ import AppHeader from '@/components/layout/AppHeader.vue'
 import LeftSidebar from '@/components/layout/LeftSidebar.vue'
 import RightSidebar from '@/components/layout/RightSidebar.vue'
 import RecordSwitcher from '@/components/layout/RecordSwitcher.vue'
+import SequenceInfoPanel from '@/components/dashboard/SequenceInfoPanel.vue'
 import StatsCards from '@/components/dashboard/StatsCards.vue'
 import SignificancePanel from '@/components/dashboard/SignificancePanel.vue'
 import ScoreLineChart from '@/components/charts/ScoreLineChart.vue'
@@ -36,6 +37,8 @@ const { t } = useI18n()
         </div>
 
         <template v-else>
+          <SequenceInfoPanel />
+
           <RecordSwitcher />
 
           <StatsCards />

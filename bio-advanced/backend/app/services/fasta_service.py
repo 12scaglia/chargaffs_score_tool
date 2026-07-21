@@ -28,6 +28,7 @@ _CLEAN_TABLE = bytes(byte if byte in VALID_BASES else 0 for byte in range(256))
 @dataclass(frozen=True, slots=True)
 class ParsedFasta:
     sequence_id: str
+    description: str
     filename: str
     total_length: int
     cleaned_sequence: np.ndarray  # uint8 ASCII codes, only A/T/G/C
@@ -64,12 +65,19 @@ def _build_parsed(records: list, filename: str) -> list[ParsedFasta]:
     parsed: list[ParsedFasta] = []
     for record in records:
         sequence_id = record.id
+        # Biopython's `description` is the whole header line, id included —
+        # strip that prefix so the frontend gets just the free-text part
+        # (organism/product for NCBI, chromosome:assembly:coords for Ensembl).
+        description = record.description
+        if description.startswith(sequence_id):
+            description = description[len(sequence_id) :].strip()
         raw_ascii = str(record.seq).upper().encode("ascii", errors="ignore")
         cleaned_sequence = _clean_to_uint8(raw_ascii, settings.read_chunk_size_bytes)
         del raw_ascii
         parsed.append(
             ParsedFasta(
                 sequence_id=sequence_id,
+                description=description,
                 filename=filename,
                 total_length=int(cleaned_sequence.shape[0]),
                 cleaned_sequence=cleaned_sequence,

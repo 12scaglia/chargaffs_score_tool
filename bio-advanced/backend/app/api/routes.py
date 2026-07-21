@@ -52,7 +52,9 @@ def _build_analyze_response(parsed_records: list[ParsedFasta], window_size: int,
 
         results.append(
             SequenceResult(
-                sequence_info=SequenceInfo(sequence_id=record.sequence_id, total_length=record.total_length),
+                sequence_info=SequenceInfo(
+                    sequence_id=record.sequence_id, description=record.description, total_length=record.total_length
+                ),
                 statistics=Statistics(
                     mean=stats.mean,
                     median=stats.median,
