@@ -15,15 +15,40 @@ const { formatNumber } = useNumberFormat()
 
 const categoryFilter = ref<AnnotationCategory | 'all'>('all')
 
+type SortKey = 'category' | 'regionScore' | 'globalScore'
+const sortKey = ref<SortKey | null>(null)
+const sortDir = ref<'asc' | 'desc'>('asc')
+
+function toggleSort(key: SortKey) {
+  if (sortKey.value === key) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortDir.value = 'asc'
+  }
+}
+
 const rows = computed(() => {
   const globalMean = store.statistics?.mean ?? null
-  return overlayRegions.value
+  const mapped = overlayRegions.value
     .filter((r) => categoryFilter.value === 'all' || r.annotation.category === categoryFilter.value)
     .map((r) => {
       const delta = globalMean !== null && r.regionMeanScore !== null ? r.regionMeanScore - globalMean : null
       return { ...r, globalMean, delta }
     })
-    .sort((a, b) => (b.delta ?? 0) - (a.delta ?? 0))
+
+  const dir = sortDir.value === 'asc' ? 1 : -1
+
+  if (sortKey.value === 'category') {
+    return mapped.sort((a, b) => dir * t(`annotations.categories.${a.annotation.category}`).localeCompare(t(`annotations.categories.${b.annotation.category}`)))
+  }
+  if (sortKey.value === 'regionScore') {
+    return mapped.sort((a, b) => dir * ((a.regionMeanScore ?? -Infinity) - (b.regionMeanScore ?? -Infinity)))
+  }
+  if (sortKey.value === 'globalScore') {
+    return mapped.sort((a, b) => dir * ((a.globalMean ?? -Infinity) - (b.globalMean ?? -Infinity)))
+  }
+  return mapped.sort((a, b) => (b.delta ?? 0) - (a.delta ?? 0))
 })
 
 function focusRegion(startIndex: number, endIndex: number) {
@@ -54,10 +79,34 @@ function focusRegion(startIndex: number, endIndex: number) {
         <thead class="text-slate-400 dark:text-slate-500">
           <tr>
             <th class="pb-2 pr-3 font-medium">{{ t('annotationStats.region') }}</th>
-            <th class="pb-2 pr-3 font-medium">{{ t('annotationStats.category') }}</th>
+            <th class="pb-2 pr-3 font-medium">
+              <button type="button" class="inline-flex items-center gap-1 hover:text-slate-600 dark:hover:text-slate-300" @click="toggleSort('category')">
+                {{ t('annotationStats.category') }}
+                <span class="flex flex-col leading-none text-[8px]">
+                  <span :class="sortKey === 'category' && sortDir === 'asc' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-300 dark:text-slate-600'">▲</span>
+                  <span :class="sortKey === 'category' && sortDir === 'desc' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-300 dark:text-slate-600'">▼</span>
+                </span>
+              </button>
+            </th>
             <th class="pb-2 pr-3 font-medium">{{ t('annotationStats.bp') }}</th>
-            <th class="pb-2 pr-3 font-medium">{{ t('annotationStats.regionScore') }}</th>
-            <th class="pb-2 pr-3 font-medium">{{ t('annotationStats.globalScore') }}</th>
+            <th class="pb-2 pr-3 font-medium">
+              <button type="button" class="inline-flex items-center gap-1 hover:text-slate-600 dark:hover:text-slate-300" @click="toggleSort('regionScore')">
+                {{ t('annotationStats.regionScore') }}
+                <span class="flex flex-col leading-none text-[8px]">
+                  <span :class="sortKey === 'regionScore' && sortDir === 'asc' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-300 dark:text-slate-600'">▲</span>
+                  <span :class="sortKey === 'regionScore' && sortDir === 'desc' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-300 dark:text-slate-600'">▼</span>
+                </span>
+              </button>
+            </th>
+            <th class="pb-2 pr-3 font-medium">
+              <button type="button" class="inline-flex items-center gap-1 hover:text-slate-600 dark:hover:text-slate-300" @click="toggleSort('globalScore')">
+                {{ t('annotationStats.globalScore') }}
+                <span class="flex flex-col leading-none text-[8px]">
+                  <span :class="sortKey === 'globalScore' && sortDir === 'asc' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-300 dark:text-slate-600'">▲</span>
+                  <span :class="sortKey === 'globalScore' && sortDir === 'desc' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-300 dark:text-slate-600'">▼</span>
+                </span>
+              </button>
+            </th>
             <th class="pb-2 font-medium">{{ t('annotationStats.delta') }}</th>
           </tr>
         </thead>
