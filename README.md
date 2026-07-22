@@ -68,6 +68,8 @@ Once both are running, open **http://127.0.0.1:5173** in your browser. The API r
 
 #### Docker (no local Python/Node needed)
 
+Requires **Docker Engine with the Compose plugin** — if `docker compose version` fails, install it from the [official Docker docs](https://docs.docker.com/engine/install/) for your OS.
+
 ```bash
 docker compose up --build
 ```
