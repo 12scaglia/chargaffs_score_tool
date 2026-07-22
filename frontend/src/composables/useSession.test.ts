@@ -58,7 +58,7 @@ describe('useSession', () => {
     const analysis = useAnalysisStore()
     analysis.filename = 'NC_005816.1.fasta'
     analysis.lastOrigin = 'fetch'
-    analysis.lastFetchSource = { source: 'ncbi', accession: 'NC_005816.1', wholeSequence: true }
+    analysis.lastFetchSource = { source: 'ncbi', accessions: ['NC_005816.1'], wholeSequence: true }
 
     const { buildSessionFile } = mountSession()
     const session = buildSessionFile()
@@ -66,7 +66,7 @@ describe('useSession', () => {
     expect(session?.source).toEqual({
       kind: 'fetch',
       source: 'ncbi',
-      accession: 'NC_005816.1',
+      accessions: ['NC_005816.1'],
       wholeSequence: true,
     })
   })

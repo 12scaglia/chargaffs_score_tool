@@ -106,7 +106,7 @@ async def analyze(
 @router.post("/fetch", response_model=AnalyzeResponse, tags=["analysis"])
 async def fetch_and_analyze(payload: FetchRequest) -> AnalyzeResponse:
     try:
-        fasta_text, filename = await fetch_service.fetch_sequence(payload.source, payload.accession, payload.species)
+        fasta_text, filename = await fetch_service.fetch_sequences(payload.source, payload.accessions, payload.species)
     except FetchServiceError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
@@ -183,7 +183,7 @@ async def significance(
 @router.post("/fetch/significance", response_model=SignificanceResponse, tags=["analysis"])
 async def fetch_significance(payload: SignificanceRequest) -> SignificanceResponse:
     try:
-        fasta_text, filename = await fetch_service.fetch_sequence(payload.source, payload.accession, payload.species)
+        fasta_text, filename = await fetch_service.fetch_sequences(payload.source, payload.accessions, payload.species)
     except FetchServiceError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
@@ -192,4 +192,6 @@ async def fetch_significance(payload: SignificanceRequest) -> SignificanceRespon
     except FastaValidationError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
-    return _build_significance_response(parsed_records, 0, payload.window_size, payload.step_size, payload.n_permutations)
+    return _build_significance_response(
+        parsed_records, payload.record_index, payload.window_size, payload.step_size, payload.n_permutations
+    )

@@ -64,3 +64,33 @@ def test_fetch_sequence_success(monkeypatch):
     text, filename = asyncio.run(fetch_service.fetch_sequence("ncbi", "NC_005816.1", None))
     assert text.startswith(">NC_005816.1")
     assert filename == "NC_005816.1.fasta"
+
+
+def test_fetch_sequences_single_accession_matches_fetch_sequence(monkeypatch):
+    monkeypatch.setattr(httpx.AsyncClient, "get", _fake_get(200, b">NC_005816.1\nATGCATGC\n"))
+    text, filename = asyncio.run(fetch_service.fetch_sequences("ncbi", ["NC_005816.1"], None))
+    assert text == ">NC_005816.1\nATGCATGC\n"
+    assert filename == "NC_005816.1.fasta"
+
+
+def test_fetch_sequences_concatenates_multiple_records(monkeypatch):
+    async def get(self, url, params=None):
+        accession = params["id"]
+        return httpx.Response(200, content=f">{accession}\nATGCATGC\n".encode(), request=httpx.Request("GET", url))
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", get)
+
+    text, filename = asyncio.run(fetch_service.fetch_sequences("ncbi", ["GENE_A", "GENE_B"], None))
+    assert text == ">GENE_A\nATGCATGC\n>GENE_B\nATGCATGC\n"
+    assert filename == "GENE_A_and_1_more.fasta"
+
+
+def test_fetch_sequences_wraps_error_with_accession_context(monkeypatch):
+    monkeypatch.setattr(httpx.AsyncClient, "get", _fake_get(404, b"not found"))
+    with pytest.raises(FetchServiceError, match="GENE_A"):
+        asyncio.run(fetch_service.fetch_sequences("ncbi", ["GENE_A"], None))
+
+
+def test_fetch_sequences_empty_list_raises():
+    with pytest.raises(FetchServiceError):
+        asyncio.run(fetch_service.fetch_sequences("ncbi", [], None))

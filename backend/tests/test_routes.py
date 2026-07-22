@@ -41,11 +41,28 @@ def test_fetch_endpoint_success(monkeypatch):
 
     monkeypatch.setattr(fetch_service, "fetch_sequence", fake_fetch_sequence)
 
-    response = client.post("/fetch", json={"source": "ncbi", "accession": "NC_TEST", "window_size": 100})
+    response = client.post("/fetch", json={"source": "ncbi", "accessions": ["NC_TEST"], "window_size": 100})
     assert response.status_code == 200
     body = response.json()
     assert body["filename"] == "NC_TEST.fasta"
     assert body["records"][0]["sequence_info"]["sequence_id"] == "seq1"
+
+
+def test_fetch_endpoint_multiple_accessions_returns_one_record_each(monkeypatch):
+    async def fake_fetch_sequence(source, accession, species=None):
+        return f">{accession}\nATGCATGCATGCATGCATGC\n", f"{accession}.fasta"
+
+    monkeypatch.setattr(fetch_service, "fetch_sequence", fake_fetch_sequence)
+
+    response = client.post(
+        "/fetch",
+        json={"source": "ncbi", "accessions": ["GENE_A", "GENE_B", "GENE_A"], "window_size": 100},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["filename"] == "GENE_A_and_1_more.fasta"
+    ids = [record["sequence_info"]["sequence_id"] for record in body["records"]]
+    assert ids == ["GENE_A", "GENE_B"]  # exact duplicate accession deduped
 
 
 def test_fetch_endpoint_whole_sequence_returns_single_window(monkeypatch):
@@ -56,7 +73,7 @@ def test_fetch_endpoint_whole_sequence_returns_single_window(monkeypatch):
 
     response = client.post(
         "/fetch",
-        json={"source": "ncbi", "accession": "NC_TEST", "window_size": 100, "whole_sequence": True},
+        json={"source": "ncbi", "accessions": ["NC_TEST"], "window_size": 100, "whole_sequence": True},
     )
     assert response.status_code == 200
     body = response.json()
@@ -74,13 +91,23 @@ def test_fetch_endpoint_propagates_fetch_service_error_as_400(monkeypatch):
 
     monkeypatch.setattr(fetch_service, "fetch_sequence", fake_fetch_sequence)
 
-    response = client.post("/fetch", json={"source": "ncbi", "accession": "BOGUS", "window_size": 100})
+    response = client.post("/fetch", json={"source": "ncbi", "accessions": ["BOGUS"], "window_size": 100})
     assert response.status_code == 400
     assert "accession non trovata" in response.json()["detail"]
 
 
 def test_fetch_endpoint_rejects_invalid_source():
-    response = client.post("/fetch", json={"source": "invalid", "accession": "X", "window_size": 100})
+    response = client.post("/fetch", json={"source": "invalid", "accessions": ["X"], "window_size": 100})
+    assert response.status_code == 422
+
+
+def test_fetch_endpoint_rejects_empty_accession_list():
+    response = client.post("/fetch", json={"source": "ncbi", "accessions": [], "window_size": 100})
+    assert response.status_code == 422
+
+
+def test_fetch_endpoint_rejects_blank_only_accession_list():
+    response = client.post("/fetch", json={"source": "ncbi", "accessions": ["  ", ""], "window_size": 100})
     assert response.status_code == 422
 
 
@@ -115,7 +142,40 @@ def test_fetch_significance_endpoint_success(monkeypatch):
 
     response = client.post(
         "/fetch/significance",
-        json={"source": "ncbi", "accession": "NC_TEST", "window_size": 100, "n_permutations": 10},
+        json={"source": "ncbi", "accessions": ["NC_TEST"], "window_size": 100, "n_permutations": 10},
     )
     assert response.status_code == 200
     assert response.json()["n_permutations"] == 10
+
+
+def test_fetch_significance_endpoint_uses_record_index_for_gene_list(monkeypatch):
+    async def fake_fetch_sequence(source, accession, species=None):
+        return f">{accession}\n" + "ATGCATGCATGCATGCATGCATGCATGCATGC\n" * 20, f"{accession}.fasta"
+
+    monkeypatch.setattr(fetch_service, "fetch_sequence", fake_fetch_sequence)
+
+    response = client.post(
+        "/fetch/significance",
+        json={
+            "source": "ncbi",
+            "accessions": ["GENE_A", "GENE_B"],
+            "window_size": 100,
+            "n_permutations": 10,
+            "record_index": 1,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["n_permutations"] == 10
+
+
+def test_fetch_significance_endpoint_invalid_record_index_returns_400(monkeypatch):
+    async def fake_fetch_sequence(source, accession, species=None):
+        return f">{accession}\n" + "ATGCATGCATGCATGCATGCATGCATGCATGC\n" * 20, f"{accession}.fasta"
+
+    monkeypatch.setattr(fetch_service, "fetch_sequence", fake_fetch_sequence)
+
+    response = client.post(
+        "/fetch/significance",
+        json={"source": "ncbi", "accessions": ["GENE_A"], "window_size": 100, "n_permutations": 10, "record_index": 5},
+    )
+    assert response.status_code == 400

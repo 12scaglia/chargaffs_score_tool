@@ -46,7 +46,7 @@ export type FetchSource = 'ncbi' | 'ensembl'
 
 export interface FetchRequest {
   source: FetchSource
-  accession: string
+  accessions: string[]
   species?: string
   window_size: number
   step_size?: number | null
@@ -55,11 +55,12 @@ export interface FetchRequest {
 
 export interface SignificanceRequest {
   source: FetchSource
-  accession: string
+  accessions: string[]
   species?: string
   window_size: number
   step_size?: number | null
   n_permutations: number
+  record_index: number
 }
 
 export interface SignificanceResponse {
@@ -148,7 +149,7 @@ export interface SessionFile {
   annotations: Annotation[]
   source:
     | { kind: 'upload'; filename: string }
-    | { kind: 'fetch'; source: FetchSource; accession: string; species?: string; wholeSequence?: boolean }
+    | { kind: 'fetch'; source: FetchSource; accessions: string[]; species?: string; wholeSequence?: boolean }
 }
 
 /** A single denormalized segment row, derived from WindowData for table/detail display. */

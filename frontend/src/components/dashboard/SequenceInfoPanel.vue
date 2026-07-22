@@ -17,14 +17,19 @@ const sourceLabel = computed(() => {
 
 /** Well-known public URL patterns for viewing the fetched record on its
  * source site — only shown for fetch-based results, since an uploaded
- * file has no such canonical page. */
+ * file has no such canonical page. Uses the accession at the same position
+ * as the active record — holds as long as each fetched accession resolves
+ * to exactly one FASTA record, true for the gene/region lookups this
+ * feature targets. */
 const sourceUrl = computed(() => {
   const src = store.lastFetchSource
   if (store.lastOrigin !== 'fetch' || !src) return null
-  if (src.source === 'ncbi') return `https://www.ncbi.nlm.nih.gov/nuccore/${encodeURIComponent(src.accession)}`
+  const accession = src.accessions[store.activeRecordIndex] ?? src.accessions[0]
+  if (!accession) return null
+  if (src.source === 'ncbi') return `https://www.ncbi.nlm.nih.gov/nuccore/${encodeURIComponent(accession)}`
   return src.species
-    ? `https://www.ensembl.org/${encodeURIComponent(src.species)}/Location/View?r=${encodeURIComponent(src.accession)}`
-    : `https://www.ensembl.org/id/${encodeURIComponent(src.accession)}`
+    ? `https://www.ensembl.org/${encodeURIComponent(src.species)}/Location/View?r=${encodeURIComponent(accession)}`
+    : `https://www.ensembl.org/id/${encodeURIComponent(accession)}`
 })
 </script>
 

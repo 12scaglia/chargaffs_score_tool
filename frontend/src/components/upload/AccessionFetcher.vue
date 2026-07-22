@@ -8,26 +8,35 @@ const { store } = defineProps<{ store: AnalysisStore }>()
 const { t } = useI18n()
 
 const source = ref<FetchSource>('ncbi')
-const accession = ref('')
+const accessionInput = ref('')
 const species = ref('')
 const wholeSequence = ref(false)
 const localError = ref<string | null>(null)
 
-const looksLikeStableId = computed(() => /^ENS/i.test(accession.value.trim()))
-const canFetch = computed(() => accession.value.trim().length > 0 && store.windowSize > 0 && !store.isLoading)
+/** Splits a pasted gene/accession list on newlines and/or commas, trims
+ * each entry, and drops blanks — lets users paste from a spreadsheet
+ * column (newline-separated) or a comma-separated string interchangeably. */
+const accessions = computed(() =>
+  accessionInput.value
+    .split(/[\n,]+/)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0),
+)
+
+const allLookLikeStableIds = computed(() => accessions.value.length > 0 && accessions.value.every((a) => /^ENS/i.test(a)))
+const canFetch = computed(() => accessions.value.length > 0 && store.windowSize > 0 && !store.isLoading)
 
 function submit() {
   localError.value = null
-  const trimmedAccession = accession.value.trim()
-  if (!trimmedAccession) {
+  if (accessions.value.length === 0) {
     localError.value = t('fetch.errorMissingAccession')
     return
   }
-  if (source.value === 'ensembl' && !species.value.trim() && !looksLikeStableId.value) {
+  if (source.value === 'ensembl' && !species.value.trim() && !allLookLikeStableIds.value) {
     localError.value = t('fetch.errorMissingSpecies')
     return
   }
-  store.runFetch(source.value, trimmedAccession, species.value.trim() || undefined, wholeSequence.value)
+  store.runFetch(source.value, accessions.value, species.value.trim() || undefined, wholeSequence.value)
 }
 </script>
 
@@ -43,19 +52,22 @@ function submit() {
     </select>
 
     <label class="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">{{ t('fetch.accessionLabel') }}</label>
-    <input
-      v-model="accession"
-      type="text"
+    <textarea
+      v-model="accessionInput"
+      rows="3"
       :placeholder="source === 'ncbi' ? t('fetch.accessionPlaceholderNcbi') : t('fetch.accessionPlaceholderEnsembl')"
-      class="mb-3 w-full rounded-md border-0 bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700"
+      class="mb-1 w-full resize-y rounded-md border-0 bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700"
     />
+    <p class="mb-3 text-[11px] text-slate-400 dark:text-slate-500">
+      {{ accessions.length > 1 ? t('fetch.accessionCount', { count: accessions.length }) : t('fetch.accessionHelp') }}
+    </p>
 
     <template v-if="source === 'ensembl'">
       <label class="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">{{ t('fetch.speciesLabel') }}</label>
       <input
         v-model="species"
         type="text"
-        :disabled="looksLikeStableId"
+        :disabled="allLookLikeStableIds"
         :placeholder="t('fetch.speciesPlaceholder')"
         class="mb-1 w-full rounded-md border-0 bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700"
       />
@@ -77,6 +89,7 @@ function submit() {
       @click="submit"
     >
       <span v-if="store.isLoading">{{ t('fetch.fetching') }}</span>
+      <span v-else-if="accessions.length > 1">{{ t('fetch.fetchButtonMultiple', { count: accessions.length }) }}</span>
       <span v-else>{{ t('fetch.fetchButton') }}</span>
     </button>
 

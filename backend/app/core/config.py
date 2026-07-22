@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     # tool targets bacterial/viral/fungal genome scale (see chargaff.py); for
     # anything bigger, use file upload instead.
     fetch_max_size_bytes: int = 50 * 1024 * 1024  # 50 MB
+    # A pasted gene/accession list is fetched sequentially (one request per
+    # accession, to stay polite to NCBI/Ensembl rate limits), so this also
+    # bounds worst-case request latency.
+    fetch_max_accessions: int = 50
 
     # Permutation-test significance endpoint
     significance_max_sequence_length: int = 5_000_000  # 5 Mb

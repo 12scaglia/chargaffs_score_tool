@@ -84,3 +84,24 @@ async def fetch_sequence(source: FetchSource, accession: str, species: str | Non
 
     filename = f"{accession}.fasta"
     return text, filename
+
+
+async def fetch_sequences(source: FetchSource, accessions: list[str], species: str | None = None) -> tuple[str, str]:
+    """Fetches each accession in `accessions` (one request at a time, to stay
+    polite to NCBI/Ensembl rate limits) and concatenates the resulting FASTA
+    bodies into a single multi-record text — the same shape `fetch_sequence`
+    returns for one accession, so it flows through `parse_fasta_text` and the
+    existing multi-record analyze/significance pipeline unchanged."""
+    if not accessions:
+        raise FetchServiceError("Nessun accession specificato.")
+
+    texts: list[str] = []
+    for accession in accessions:
+        try:
+            text, _ = await fetch_sequence(source, accession, species)
+        except FetchServiceError as exc:
+            raise FetchServiceError(f"Errore nel recupero di '{accession}': {exc}") from exc
+        texts.append(text.rstrip("\n"))
+
+    filename = f"{accessions[0]}.fasta" if len(accessions) == 1 else f"{accessions[0]}_and_{len(accessions) - 1}_more.fasta"
+    return "\n".join(texts) + "\n", filename
