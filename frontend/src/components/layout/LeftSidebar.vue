@@ -7,6 +7,9 @@ import AccessionFetcher from '@/components/upload/AccessionFetcher.vue'
 import WindowSizeSelector from '@/components/controls/WindowSizeSelector.vue'
 import AnnotationsPanel from '@/components/annotations/AnnotationsPanel.vue'
 
+defineProps<{ open: boolean }>()
+const emit = defineEmits<{ close: [] }>()
+
 const store = useAnalysisStore()
 const { t } = useI18n()
 
@@ -27,7 +30,21 @@ const canAnalyze = computed(() => store.selectedFile !== null && store.windowSiz
 </script>
 
 <template>
-  <aside class="flex w-80 shrink-0 flex-col gap-6 overflow-y-auto border-r border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+  <aside
+    class="absolute inset-y-0 left-0 z-30 flex w-80 flex-col gap-6 overflow-y-auto border-r border-slate-200 bg-white p-5 shadow-xl transition-transform duration-200 ease-in-out dark:border-slate-800 dark:bg-slate-900 lg:static lg:z-auto lg:w-80 lg:shrink-0 lg:translate-x-0 lg:shadow-none"
+    :class="open ? 'translate-x-0' : '-translate-x-full'"
+  >
+    <button
+      type="button"
+      class="self-end rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 lg:hidden"
+      :aria-label="t('sidebar.close')"
+      @click="emit('close')"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M18 6 6 18M6 6l12 12" />
+      </svg>
+    </button>
+
     <div class="flex rounded-md bg-slate-100 p-0.5 text-sm dark:bg-slate-800">
       <button
         type="button"

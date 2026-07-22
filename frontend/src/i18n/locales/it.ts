@@ -41,6 +41,8 @@ export default {
     analyzing: 'Analisi in corso…',
     analyze: 'Analizza',
     selectFileFirst: 'Seleziona un file FASTA prima di analizzare.',
+    open: 'Apri il pannello laterale',
+    close: 'Chiudi il pannello laterale',
   },
   fetch: {
     tabUpload: 'Carica file',

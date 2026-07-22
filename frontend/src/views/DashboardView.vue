@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAnalysisStore } from '@/stores/analysis'
 import AppHeader from '@/components/layout/AppHeader.vue'
@@ -19,14 +20,28 @@ import ResultsTable from '@/components/table/ResultsTable.vue'
 
 const store = useAnalysisStore()
 const { t } = useI18n()
+
+// Off-canvas below the `lg` breakpoint (see LeftSidebar.vue); ignored above
+// it, where the sidebar is always visible inline. Auto-closes once results
+// land so a narrow-viewport user sees the dashboard right away instead of
+// having to dismiss the drawer themselves.
+const isSidebarOpen = ref(false)
+watch(
+  () => store.hasResults,
+  (hasResults) => {
+    if (hasResults) isSidebarOpen.value = false
+  },
+)
 </script>
 
 <template>
   <div class="flex h-screen flex-col">
-    <AppHeader />
+    <AppHeader @toggle-sidebar="isSidebarOpen = !isSidebarOpen" />
 
-    <div class="flex min-h-0 flex-1">
-      <LeftSidebar />
+    <div class="relative flex min-h-0 flex-1">
+      <div v-if="isSidebarOpen" class="absolute inset-0 z-20 bg-black/40 lg:hidden" @click="isSidebarOpen = false" />
+
+      <LeftSidebar :open="isSidebarOpen" @close="isSidebarOpen = false" />
 
       <main class="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
         <div v-if="!store.hasResults" class="flex flex-1 items-center justify-center text-center text-slate-400 dark:text-slate-500">

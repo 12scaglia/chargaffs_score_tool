@@ -14,6 +14,8 @@ const { formatNumber } = useNumberFormat()
 const { downloadReport } = useMarkdownReport()
 const { downloadSession, loadSessionFile } = useSession()
 
+const emit = defineEmits<{ 'toggle-sidebar': [] }>()
+
 const sessionFileInput = ref<HTMLInputElement | null>(null)
 
 function onSessionFileChange(event: Event) {
@@ -26,6 +28,16 @@ function onSessionFileChange(event: Event) {
 <template>
   <header class="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5 dark:border-slate-800 dark:bg-slate-900">
     <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="-ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 lg:hidden"
+        :aria-label="t('sidebar.open')"
+        @click="emit('toggle-sidebar')"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
       <span class="text-lg font-bold text-emerald-600 dark:text-emerald-400">{{ t('app.title') }}</span>
       <span class="text-sm text-slate-500 dark:text-slate-400">{{ t('app.subtitle') }}</span>
     </div>

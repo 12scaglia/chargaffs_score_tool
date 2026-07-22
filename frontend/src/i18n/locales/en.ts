@@ -41,6 +41,8 @@ export default {
     analyzing: 'Analyzing…',
     analyze: 'Analyze',
     selectFileFirst: 'Select a FASTA file before analyzing.',
+    open: 'Open sidebar',
+    close: 'Close sidebar',
   },
   fetch: {
     tabUpload: 'Upload file',
